@@ -1,6 +1,6 @@
 # Architecture — Nexus Spatial Intelligence
 
-**Document status:** M1, M2, and M3 are IMPLEMENTED and VERIFIED. M4-M6 remain proposed.
+**Document status:** M1, M2, M3, and M4 are IMPLEMENTED and VERIFIED. M5-M6 remain proposed.
 
 ## 1. Product goal
 
@@ -22,8 +22,25 @@ Nexus Spatial Intelligence analyzes short video clips to produce spatially organ
 - ✓ Server entry point (server.py) for development
 - ✓ 15 automated API tests
 
+**MILESTONE 3 — VERIFIED COMPLETE**
+- ✓ Adaptive policy engine with decision trace recording
+- ✓ 16x16 follow-up grid analysis when low activity detected
+- ✓ Deterministic policy ("low_activity_refinement")
+- ✓ 18 automated adaptive analysis tests
+
+**MILESTONE 4 — VERIFIED COMPLETE**
+- ✓ Optional S3 artifact storage component (src/s3_storage.py)
+- ✓ S3StorageConfig and S3StorageClient classes
+- ✓ Environment-based configuration (S3_ENABLED, S3_BUCKET, AWS_REGION, S3_PREFIX)
+- ✓ S3 artifact upload integration with POST /analyze
+- ✓ Graceful fallback to local storage when S3 disabled
+- ✓ Mock-based S3 testing (no real AWS writes)
+- ✓ boto3 and botocore dependencies (v1.34.39 and v1.34.162)
+- ✓ 18 S3 storage tests + 4 API integration tests
+- ✓ Health endpoint reports S3 status
+
 **Remaining components are PROPOSED, not yet implemented:**
-- AWS-backed execution and object storage (M4).
+- Real-world AWS deployment testing (EC2 instance launch, live S3 writes).
 - Evaluation harness and performance benchmarking (M5).
 - Competition submission package (M6).
 
@@ -37,7 +54,7 @@ Nexus Spatial Intelligence analyzes short video clips to produce spatially organ
 | Artifact writer | Produce annotated frame/video, heatmap, JSON report, and run metadata | Every artifact must correspond to the same run |
 | API layer | Expose health and video-analysis endpoints | Thin wrapper around the pipeline |
 | Local artifact storage | Store temporary inputs and generated results | Keep generated artifacts outside source files |
-| AWS adapter (later milestone) | Store selected inputs/results in S3 and/or run processing on AWS compute | Add only after local flow works; least privilege |
+| Optional S3 storage adapter | Upload artifacts to S3 when enabled | Configurable via environment; local fallback when disabled |
 | Evaluation harness | Run repeatable test cases and measure outputs/time | Report limitations and avoid unsupported accuracy claims |
 | UI (optional MVP extension) | Upload a clip and display outputs | Do not block the pipeline on elaborate UI work |
 

@@ -1,7 +1,7 @@
 # Session Handoff — Nexus Spatial Intelligence
 
 **Last updated:** 2026-10-23  
-**Session state:** M3 adaptive vision analysis complete and verified. 46 automated tests passing (M1:13, M2:15, M3:18). Ready for M4 AWS integration.
+**Session state:** M4 optional S3 artifact storage complete and verified (mock tests + real-AWS integration test). 68 automated tests passing (M1:13, M2:19, M3:18, M4:18). Ready for M5 evaluation and M6 submission.
 
 ## What this project is
 
@@ -9,112 +9,123 @@ Nexus Spatial Intelligence is intended to be a reproducible video-analysis appli
 
 ## Last verified checkpoint
 
-**M3 Adaptive Vision Analysis — COMPLETE**
+**M4 Optional S3 Artifact Storage — COMPLETE (Mock + Real-AWS verified)**
 
-- Git repository at commit `fcf2a55` with M3 implementation
-- Core modules:
-  - `src/adaptive_analysis.py`: Policy engine with AdaptiveAnalysisPolicy and AdaptiveAnalysisEngine
-  - `src/main.py`: Extended with adaptive logic and --adaptive-threshold parameter
-  - `src/video_analyzer.py`: Updated to store foreground masks and support adaptive_trace in reports
-  - `tests/test_adaptive_analysis.py`: 18 comprehensive adaptive tests
-- Adaptive Policy:
-  - Name: "low_activity_refinement"
-  - Version: 1.0
-  - Behavior: If avg_foreground_percentage < threshold, trigger follow-up with 16x16 grid
-  - Threshold: Configurable (default 5.0%, tested with 10.0% and 2.0%)
-- Decision Trace Recording:
-  - Policy name and version
-  - Initial observations with all baseline metrics
-  - Condition evaluated (threshold comparison)
-  - Decision made (follow_up_triggered or follow_up_skipped)
-  - Reason (human-readable explanation)
-  - Follow-up configuration (action, grid sizes, frame count, reason)
-  - Follow-up results (if triggered): metrics, duration, grid size, comparison
-  - Status (complete or followup_failed)
-  - Warnings array
-- Follow-up Analysis:
-  - Triggered only when baseline avg_foreground < threshold
-  - Uses same frames as baseline (no additional frame processing)
-  - Processes with 16x16 grid instead of 8x8
-  - Generates separate heatmap artifact (heatmap_followup_16x16.png)
-  - Comparison analysis between baseline and follow-up
+- Git repository at commit `79d87e1` (before M4 changes) with M3 implementation as baseline
+- New M4 modules:
+  - `src/s3_storage.py`: S3StorageConfig and S3StorageClient (279 lines)
+  - `tests/test_s3_storage.py`: 18 comprehensive S3 unit tests (337 lines)
+- M4 modified files:
+  - `src/api.py`: Added S3 client integration, upload after analysis, health endpoint S3 status
+  - `tests/test_api.py`: Added 4 S3 integration tests (M2 count: 15 → 19)
+  - `requirements.txt`: Added boto3==1.34.39, botocore==1.34.162
+  - `run_all_tests.py`: Updated for M4 test execution and reporting
+- S3 Storage Configuration:
+  - Environment variables: S3_ENABLED, S3_BUCKET, AWS_REGION, S3_PREFIX
+  - Default: S3 disabled (local storage only)
+  - Credential handling: boto3 standard credential chain (no embedded credentials)
+  - When enabled: Uploads to s3://{bucket}/{prefix}/{run_id}/
+- S3 Storage Features:
+  - Optional component: Can be enabled/disabled via environment
+  - Graceful fallback: Works with boto3 missing or S3 disabled
+  - Error handling: S3 upload failures return HTTP 500, never silent
+  - Mock testing: All S3 operations mockable for unit tests
+  - API integration: POST /analyze uploads artifacts after successful analysis
+  - Health endpoint: Includes s3_storage_enabled field
+  - Response metadata: Includes s3_storage object with enabled status and uploaded artifact URIs (if enabled)
 - Test Results:
-  - 18/18 adaptive tests passing
-  - 13/13 M1 tests still passing (no regression)
-  - 15/15 M2 tests still passing (no regression)
-  - Total: 46/46 tests passing
-  - Both decision branches verified deterministic
-  - Policy logic verified with unit tests
-  - End-to-end pipeline verified with synthetic videos
-- Report Schema:
-  - Report version updated to 1.1
-  - New "adaptive_analysis" section added when present
-  - Backward compatible (section is optional)
-  - Includes full decision trace and results
-- CLI Features:
-  - New parameter: --adaptive-threshold <float>
-  - Default: 5.0
-  - Example: python src/main.py video.mp4 --adaptive-threshold 10.0
-- Verified Behavior:
-  - Low activity (3.72%) with threshold 10.0%: Follow-up TRIGGERED ✓
-  - Low activity (3.72%) with threshold 2.0%: Follow-up SKIPPED ✓
-  - Decision recorded accurately in both cases ✓
-  - Follow-up heatmap generated only when triggered ✓
-  - Artifacts organized by run_id as before ✓
+  - 68/68 total tests passing
+  - M1: 13/13 (no regression)
+  - M2: 19/19 (15 original + 4 new S3 integration)
+  - M3: 18/18 (no regression)
+  - M4: 18/18 (S3 storage unit tests)
+  - All tests run with project venv, mock-based (no real AWS calls)
+- Real-AWS S3 Integration Test (2026-10-23):
+  - ✓ Local FastAPI application started with S3_ENABLED=true
+  - ✓ AWS credential provider (AWS_PROFILE=nexus-process) authenticated via boto3 credential chain
+  - ✓ STS authentication verified; S3 listing succeeded
+  - ✓ POST /analyze processed videos/test_synthetic.mp4 (300 frames)
+  - ✓ Run ID: run_20261023_111911_e964dd98
+  - ✓ Processing time: 1.753 seconds (171.13 FPS)
+  - ✓ Five artifacts uploaded to real S3 bucket:
+    - annotated_video.mp4 (1,534,866 bytes)
+    - heatmap.png (107,793 bytes)
+    - heatmap_followup_16x16.png (103,975 bytes)
+    - report.json (3,563 bytes)
+    - run_metadata.json (430 bytes)
+  - ✓ Total size: 1,750,627 bytes
+  - ✓ S3 ListObjectsV2 verified all five objects present at: outputs/run_20261023_111911_e964dd98/
+  - ✓ API response correctly reported: s3_storage.enabled=true, s3_storage.uploaded_artifacts with S3 URIs
+- S3 Testing Approach:
+  - Unit tests use unittest.mock for S3 operations (68-test suite)
+  - Real-AWS test used boto3 credential chain with live S3 bucket
+  - Tests cover: config initialization, disabled mode, successful uploads, error handling, missing files, statistics
+  - No moto library required (direct mocking of boto3 client)
+  - Mock tests: No AWS credentials needed for test execution
+  - Real-AWS test: Used existing bucket and AWS credentials via credential provider
+- boto3 Dependency:
+  - Version: 1.34.39 (compatible with Python 3.12.10)
+  - Also installed: botocore 1.34.162, s3transfer 0.10.4, and transitive dependencies
+  - Verified installed and importable in venv
+  - Credential chain: Uses AWS_PROFILE environment variable for authentication
+- AWS Resources Status:
+  - **Modified:** S3 bucket now contains test artifacts in outputs/run_20261023_111911_e964dd98/
+  - **Not modified:** IAM role NexusSpatialIntelligenceEC2Role (not yet exercised on EC2)
+  - **Not launched:** EC2 instance
+  - **Tested:** Local application-to-S3 integration (mock tests + real-AWS test)
+  - **Not tested:** EC2 instance role; real EC2 deployment
 
 ## Exact next steps
 
-**For next session: Implement M4 — AWS Integration**
+**For next session: M5 Evaluation and M6 Competition Submission Preparation**
 
-This is the final required milestone before competition submission. M4 should:
+M4 optional S3 storage component is now IMPLEMENTED and VERIFIED (both mock tests and real-AWS integration verified). Real-AWS testing has confirmed:
+- ✓ Local FastAPI application successfully integrates with real S3 bucket
+- ✓ boto3 credential chain (AWS_PROFILE) authentication works
+- ✓ Artifacts uploaded and verified in S3
 
-1. **Plan AWS architecture:**
-   - Assess available AWS account permissions
-   - Choose compute: Lambda (serverless), EC2 (VMs), or ECS (containers)
-   - Choose storage: S3 for inputs/outputs, optional CloudWatch for logs
-   - Establish IAM roles with least-privilege permissions
+The next phase focuses on evaluation and submission:
 
-2. **Determine scope based on competition requirements:**
-   - Does the competition require cloud deployment?
-   - What AWS services are permitted/suggested?
-   - Are there budget or quota limits?
-   - What submission format is expected?
+### M5 Evaluation (Priority: High)
+Conduct comprehensive evaluation of the M1/M2/M3 core functionality with diverse test cases:
 
-3. **Implement minimal AWS integration:**
-   - Upload sample video to S3
-   - Invoke analysis via Lambda or compute instance
-   - Store results in S3
-   - Document the flow and costs
+1. Create evaluation matrix with test cases covering:
+   - Normal activity videos (motion 5-15%)
+   - Low activity videos (motion <3%)
+   - High activity videos (motion >20%)
+   - Edge cases (very short videos, near-static frames)
+2. Record for each test:
+   - Input video characteristics (duration, resolution, activity level)
+   - Processing time and FPS
+   - Motion metrics (avg, min, max, std)
+   - Adaptive policy decisions (triggered/skipped)
+   - Artifact generation success/failure
+3. Document limitations and known issues
+4. Prepare results matrix for M6 submission
 
-4. **Test end-to-end AWS pipeline:**
-   - Run M1/M2/M3 tests against AWS-deployed service
-   - Verify artifact retrieval from S3
-   - Measure performance and costs
+### M6 Competition Submission (Priority: High)
+Package project for competition submission:
 
-5. **Prepare competition submission package (M6):**
-   - README with AWS setup and demo instructions
-   - Sample run results and screenshots
-   - Cost analysis and limitations
-   - Adaptive analysis explanation and evidence
-   - Commit with: "feat: Implement M4 AWS integration"
+1. **README:** Complete setup, demo, and evaluation instructions
+2. **AWS Architecture:** Document local-to-S3 integration (already verified)
+3. **Sample outputs:** Include screenshots and metrics from M5 evaluation
+4. **Performance notes:** Document processing rates, AWS costs, limitations
+5. **Adaptive analysis evidence:** Show decision trace examples from M5
+6. **Submission:** Complete per competition rubric and deadline
 
-**Optional: M5 Evaluation (can run in parallel)**
-- Create comprehensive evaluation matrix
-- Test on diverse sample videos
-- Document processing time, metrics, adaptive decisions
-- Report limitations and areas for future work
+**Status of M4 AWS:**
+- ✓ Mock testing: Complete (68 tests passing)
+- ✓ Real-AWS testing: Complete (local-to-S3 integration verified)
+- ✓ EC2 deployment: NOT YET PERFORMED (optional; test on EC2 instance role if time permits)
+- ✓ Documentation: S3 bucket populated with test artifacts; no EC2 instance launch
 
-**Final checklist before submission:**
-- [ ] All 46 tests passing
-- [ ] README complete with setup and demo
-- [ ] AWS deployment working and documented
-- [ ] Sample outputs captured
-- [ ] Competition requirements verified
-- [ ] Budget and cost documented
-- [ ] Adaptive analysis demonstrated with evidence
-- [ ] Run final verification script
-- [ ] All code committed and clean
-- [ ] Submission deadline confirmed
+**Before final submission:**
+- [ ] Confirm competition deadline and rubric
+- [ ] Complete M5 evaluation with diverse test cases
+- [ ] Clean up or document S3 test artifacts (outputs/run_20261023_111911_e964dd98/)
+- [ ] Verify all 68 tests still pass on clean environment
+- [ ] Review and update documentation with M5 results
+- [ ] Prepare submission package per competition requirements
 
 
 ## Commands not to run blindly
@@ -139,3 +150,16 @@ Before ending a future work session:
 ## Resume prompt
 
 > Read `AGENTS.md`, `ARCHITECTURE.md`, `DECISIONS.md`, `ROADMAP.md`, `STATUS.md`, and `SESSION_HANDOFF.md`. Inspect the actual repository state without destructive changes. Do not assume any unverified status is complete. Continue from the exact next step in `SESSION_HANDOFF.md`, verify the result, and update the continuity files before the session ends.
+
+## Documentation Update Notes (2026-10-23)
+
+**This session:** Updated ARCHITECTURE.md, STATUS.md, ROADMAP.md, DECISIONS.md, and SESSION_HANDOFF.md to reflect M4 optional S3 storage implementation.
+
+**Files changed:**
+- docs/ARCHITECTURE.md: M4 marked as VERIFIED COMPLETE; S3 adapter documented in component table
+- docs/STATUS.md: Updated to M4 completion (68 tests); added S3 storage details; updated test counts and update log
+- docs/ROADMAP.md: M4 marked as IMPLEMENTED & VERIFIED with full evidence
+- docs/DECISIONS.md: Added D-004 decision entry for M4 implementation approach
+- docs/SESSION_HANDOFF.md: Replaced M3 checkpoint with M4 checkpoint; updated next steps for post-M4 work (Options A/B/C)
+
+**No new files created. All documentation remains in docs/ directory.**

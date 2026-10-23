@@ -39,6 +39,28 @@ Record decisions that affect product scope, architecture, data, evaluation, depl
 - **Consequences:** Update `ARCHITECTURE.md` and `STATUS.md` after implementation and verification.
 - **Revisit when:** The repository has working code and the actual component boundaries are known.
 
+## D-004 — Implement optional S3 artifact storage before real AWS deployment
+
+- **Status:** Accepted
+- **Date:** 2026-10-23
+- **Context:** M4 AWS integration needed before competition submission; real AWS deployment adds complexity and cost.
+- **Decision:** Implement optional S3 storage component with mock testing first, then defer real EC2/Lambda deployment to separate work phase.
+- **Rationale:** 
+  - Decouples storage abstraction from compute deployment
+  - Allows mock-based testing without AWS resources or credentials
+  - Enables local testing and M5/M6 work in parallel
+  - Reduces risk of cost overruns during development
+- **Alternatives considered:**
+  - Deploy to EC2 first (more resources, more complex, higher cost)
+  - Use only local storage (no AWS component for competition)
+  - Full Lambda serverless setup (additional complexity, timeout constraints)
+- **Consequences:**
+  - S3 storage is optional and environment-configurable
+  - Default behavior unchanged (local storage only)
+  - Future work required for real-world EC2/Lambda deployment
+  - All 46 original tests still pass; 22 new S3 tests added
+- **Revisit when:** Competition requirements clarified or real AWS testing phase begins.
+
 ## Decision entry template
 
 ### D-XXX — Short decision title

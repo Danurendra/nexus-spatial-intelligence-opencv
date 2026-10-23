@@ -279,6 +279,96 @@ class TestFileCleanup(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class TestS3IntegrationAPI(unittest.TestCase):
+    """Tests for S3 storage integration with the API."""
+    
+    @classmethod
+    def setUpClass(cls):
+        """Create test client and test video."""
+        cls.app = create_app()
+        cls.client = TestClient(cls.app)
+        
+        # Create temporary test video
+        cls.test_video_path = Path(tempfile.gettempdir()) / "test_s3_video.mp4"
+        if not cls.test_video_path.exists():
+            # Create synthetic video (30 frames, 320x240)
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            writer = cv2.VideoWriter(str(cls.test_video_path), fourcc, 30.0, (320, 240))
+            for i in range(30):
+                frame = np.random.randint(0, 255, (240, 320, 3), dtype=np.uint8)
+                writer.write(frame)
+            writer.release()
+    
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up test video."""
+        if cls.test_video_path.exists():
+            cls.test_video_path.unlink()
+    
+    def test_health_endpoint_includes_s3_status(self):
+        """Health endpoint should include S3 storage status."""
+        response = self.client.get("/health")
+        data = response.json()
+        
+        self.assertIn("s3_storage_enabled", data)
+        # Default is False (S3 disabled)
+        self.assertFalse(data["s3_storage_enabled"])
+    
+    def test_analyze_response_includes_s3_storage_info(self):
+        """Analyze response should include S3 storage information."""
+        from unittest.mock import patch
+        
+        with open(self.test_video_path, "rb") as f:
+            with patch.dict('os.environ', {'S3_ENABLED': 'false'}):
+                response = self.client.post(
+                    "/analyze",
+                    files={"file": ("test.mp4", f, "video/mp4")}
+                )
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        
+        self.assertIn("s3_storage", data)
+        self.assertFalse(data["s3_storage"]["enabled"])
+    
+    def test_analyze_with_s3_disabled_succeeds(self):
+        """Analysis should succeed with S3 disabled (local storage only)."""
+        with open(self.test_video_path, "rb") as f:
+            response = self.client.post(
+                "/analyze",
+                files={"file": ("test.mp4", f, "video/mp4")}
+            )
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "success")
+        self.assertIn("run_id", data)
+    
+    def test_analyze_with_s3_upload_failure_returns_500(self):
+        """Analysis should fail (500) if S3 upload fails."""
+        from unittest.mock import patch, MagicMock
+        
+        with open(self.test_video_path, "rb") as f:
+            # Mock S3 storage to fail on upload
+            with patch('src.api.s3_storage') as mock_s3:
+                mock_s3.upload_artifacts.return_value = {
+                    "success": False,
+                    "s3_enabled": True,
+                    "uploaded_artifacts": {},
+                    "local_artifacts": {},
+                    "errors": ["S3 Access Denied"]
+                }
+                
+                response = self.client.post(
+                    "/analyze",
+                    files={"file": ("test.mp4", f, "video/mp4")}
+                )
+        
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn("S3 artifact upload failed", data.get("detail", ""))
+
+
 def run_tests(verbosity=2):
     """Run all tests."""
     loader = unittest.TestLoader()
@@ -288,6 +378,7 @@ def run_tests(verbosity=2):
     suite.addTests(loader.loadTestsFromTestCase(TestAnalyzeEndpoint))
     suite.addTests(loader.loadTestsFromTestCase(TestErrorHandling))
     suite.addTests(loader.loadTestsFromTestCase(TestFileCleanup))
+    suite.addTests(loader.loadTestsFromTestCase(TestS3IntegrationAPI))
     
     runner = unittest.TextTestRunner(verbosity=verbosity)
     result = runner.run(suite)
