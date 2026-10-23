@@ -1,7 +1,7 @@
 # Session Handoff — Nexus Spatial Intelligence
 
 **Last updated:** 2026-10-23  
-**Session state:** M1 implementation complete and verified. Local pipeline tested with synthetic video. Ready for M2 API integration.
+**Session state:** M2 API integration complete and verified. FastAPI endpoints tested with 15 automated tests. Ready for M3 adaptive analysis implementation.
 
 ## What this project is
 
@@ -9,64 +9,80 @@ Nexus Spatial Intelligence is intended to be a reproducible video-analysis appli
 
 ## Last verified checkpoint
 
-**M1 Local Video Pipeline — COMPLETE**
+**M2 Minimal API Integration — COMPLETE**
 
-- Git repository at commit `a0c2760` with all M1 implementation
-- Core modules implemented:
-  - `src/video_analyzer.py`: VideoReader, MotionAnalyzer, HeatmapGenerator, ReportBuilder
-  - `src/main.py`: CLI entry point for end-to-end analysis
-  - `tests/test_video_analyzer.py`: 13 automated tests (all passing)
-  - `verify_artifacts.py`: Artifact validation script
-  - `create_test_video.py`: Synthetic test video generator
-- Test video created: `videos/test_synthetic.mp4` (300 frames, 640x480, 30 FPS, 0.59 MB)
-- Test run verified:
-  - Processed 300 frames in 2.06 seconds
-  - Generated annotated_video.mp4 (readable, correct format)
-  - Generated heatmap.png (640x480 BGR color image)
-  - Generated report.json (valid, 9 top-level keys, realistic metrics)
-  - Generated run_metadata.json (valid, 6 keys with processing info)
-- All artifacts independently verified with verify_artifacts.py
-- Test suite passes with no failures
-- Motion metrics: avg 3.72%, min 0%, max 8.61%, std 1.90%
-- Processing rate: 158 FPS (good for real-time capability)
+- Git repository at commit `04325e4` with all M2 implementation
+- Core modules:
+  - `src/api.py`: FastAPI application with /health and /analyze endpoints
+  - `src/server.py`: Development server entry point
+  - `tests/test_api.py`: 15 comprehensive API tests
+  - `test_api_manual.py`: Manual verification script
+- API Features:
+  - GET /health: Returns service status (200)
+  - POST /analyze: Accepts video upload, validates, processes, returns JSON
+  - File validation: type checking (.mp4, .avi, .mov, .mkv, .flv), size limits (100 MB), content validation
+  - Temp file handling: Safe storage in temp dir with automatic cleanup on success/failure
+  - Error handling: 400 for invalid inputs, 500 for processing errors
+- Test Results:
+  - 15/15 API tests passing
+  - 13/13 M1 tests still passing (core pipeline untouched)
+  - Health endpoint verified: returns 200 with service metadata
+  - Upload endpoint verified: processes 30-frame synthetic video in 0.14s (209 FPS)
+  - File validation verified: invalid types rejected, corrupted videos rejected
+  - Temp cleanup verified: directories cleaned after analysis
+- API Response Format:
+  - status: "success" or error
+  - run_id: unique identifier
+  - processing: frames_processed, duration_seconds, fps_processed
+  - analysis: method, description, metrics (avg/min/max/std foreground %)
+  - artifacts: paths to annotated_video and heatmap
+  - notes: disclaimer about motion vs detection
+- Requirements Updated:
+  - FastAPI 0.161.1
+  - Uvicorn 0.54.0
+  - python-multipart 0.0.32
+  - httpx 0.28.1
+  - All dependencies pinned for reproducibility
 
 ## Exact next steps
 
-**For next session: Implement M2 — Minimal API Integration**
+**For next session: Implement M3 — Adaptive Analysis and Decision Trace**
 
-1. **Install FastAPI and dependencies:**
-   ```powershell
-   venv\Scripts\Activate
-   pip install fastapi uvicorn python-multipart
-   pip freeze > requirements.txt
-   ```
+1. **Design the adaptive condition:**
+   - Define a measurable threshold based on initial motion analysis
+   - Example: IF avg_foreground_percentage < 5%, analyze at higher grid resolution
+   - Example: IF video has high motion variance, focus on high-motion regions
+   - Or: IF processing time < 100ms, run additional refinement pass
 
-2. **Create `src/api.py` with FastAPI application:**
-   - `GET /health` endpoint
-   - `POST /analyze` endpoint accepting video file upload
-   - File validation (type, size limits)
-   - Safe file handling with temp directory cleanup
-   - Return JSON response with status and artifact references
+2. **Implement adaptive logic in video_analyzer.py:**
+   - After initial analysis, evaluate the condition
+   - If triggered, perform bounded follow-up analysis (e.g., re-analyze high-motion regions)
+   - Record decision and rationale in output report
 
-3. **Update `src/main.py` or create `src/server.py`:**
-   - Add `uvicorn.run()` call for development server
-   - Add logging and request tracking
+3. **Create decision trace in JSON report:**
+   - Add "adaptive_analysis" section to report.json
+   - Record: initial_condition, decision_made, action_taken, result_comparison, final_status
 
-4. **Create integration tests:**
-   - Test valid video upload and processing
-   - Test invalid file rejection
-   - Test concurrent requests (if applicable)
+4. **Create M3 tests:**
+   - Test with video that triggers adaptive path
+   - Test with video that does not trigger adaptive path
+   - Verify decision trace is recorded
+   - Compare results with/without adaptive analysis
 
-5. **Verify and commit:**
-   - Start dev server: `python src/main.py --server`
-   - Test with curl or Postman
-   - Update STATUS.md and SESSION_HANDOFF.md
-   - Commit M2 implementation
+5. **Update API to return adaptive trace:**
+   - Include adaptive_analysis data in POST /analyze response
+   - Preserve decision log for demonstration
 
-**Optional: Prepare M3 (Adaptive Analysis)**
-- Design a measurable condition based on initial motion metrics
-- Implement bounded follow-up analysis
-- Record decision trace in JSON report
+6. **Verify and commit:**
+   - Run M1 tests (13) - should still pass
+   - Run M2 tests (15) - should still pass
+   - Run new M3 tests
+   - Commit with: "feat: Implement M3 adaptive analysis with decision trace"
+
+**Then prepare for M4 (AWS Integration):**
+- Assess AWS account permissions
+- Plan S3 storage for inputs/outputs
+- Plan compute deployment (Lambda, EC2, or container)
 
 ## Commands not to run blindly
 

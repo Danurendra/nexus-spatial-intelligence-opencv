@@ -54,16 +54,31 @@ Acceptance criteria:
 
 ### M2 — Minimal API integration
 
-**Priority:** P1 · **Status:** Not verified
+**Priority:** P1 · **Status:** IMPLEMENTED & VERIFIED
 
 Tasks:
-- Add a health endpoint and one video-analysis endpoint if the HTTP workflow is useful.
-- Add input validation, upload limits, safe paths, logging, and cleanup.
-- Test valid and invalid requests.
+- ✓ Add GET /health endpoint for service status.
+- ✓ Add POST /analyze endpoint for video upload and analysis.
+- ✓ Implement file validation (type, size, content).
+- ✓ Safe file handling with temp directory cleanup.
+- ✓ Return JSON with status, run_id, metrics, artifact references.
+- ✓ Comprehensive error handling and logging.
+- ✓ Automated API test suite (15 tests).
 
 Acceptance criteria:
-- A client can submit a supported video and receive a truthful report.
-- Invalid inputs fail safely and predictably.
+- ✓ Client can submit a supported video and receive a truthful report.
+- ✓ Invalid inputs fail safely and predictably.
+- ✓ Temporary upload files are cleaned up on success and failure.
+- ✓ API response includes run ID, metrics, and artifact paths.
+- ✓ All M1 tests continue to pass (core pipeline untouched).
+
+**Evidence:**
+- 15 API tests passing (health, valid upload, validation, error handling)
+- Tested with synthetic video: 30 frames, 0.14s processing (209 FPS)
+- File validation: type checks, size limits, content validation
+- Temp file cleanup verified
+- All error cases properly rejected (400/500)
+- Response includes processing metrics and artifact references
 
 ### M3 — Adaptive analysis and decision trace
 

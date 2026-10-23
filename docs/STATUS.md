@@ -1,7 +1,7 @@
 # Project Status — Nexus Spatial Intelligence
 
 **Last updated:** 2026-10-23  
-**Status:** M1 Local video pipeline IMPLEMENTED and VERIFIED. Core analysis complete, ready for M2 API integration.
+**Status:** M2 Minimal API Integration IMPLEMENTED and VERIFIED. FastAPI endpoints tested with automated suite. Ready for M3 adaptive analysis.
 
 ## Current summary
 
@@ -11,58 +11,52 @@ The continuity-document starter pack is prepared for use at the root of a new re
 
 | Area | Status | Evidence / notes |
 |---|---|---|
-| New repository initialized | VERIFIED | Git initialized, commit a0c2760 |
-| Python 3.12.10 environment | VERIFIED | python --version output confirmed |
-| Virtual environment created | VERIFIED | venv activated and pip 25.0.1 available |
-| OpenCV 5.0.0 installed | VERIFIED | cv2.__version__ reports 5.0.0 |
-| OpenCV video I/O features | VERIFIED | VideoCapture, VideoWriter, CAP_PROP_* all present |
-| OpenCV motion detection features | VERIFIED | createBackgroundSubtractorMOG2, cvtColor, applyColorMap available |
-| Local video pipeline | IMPLEMENTED & VERIFIED | VideoReader, MotionAnalyzer, HeatmapGenerator, ReportBuilder classes |
-| Synthetic test video | CREATED & VERIFIED | 300 frames, 640x480, 30 FPS, 0.59 MB |
-| Main CLI entry point | IMPLEMENTED & TESTED | src/main.py accepts video path, runs end-to-end |
-| Annotated video output | VERIFIED | annotated_video.mp4 generated, readable, correct dimensions |
-| Heatmap visualization | VERIFIED | heatmap.png generated, 640x480 BGR image with color mapping |
-| JSON report | VERIFIED | report.json generated, valid JSON, contains all required fields |
-| Run metadata | VERIFIED | run_metadata.json generated, valid JSON with processing info |
-| Automated test suite | IMPLEMENTED & VERIFIED | 13 tests covering VideoReader, MotionAnalyzer, HeatmapGenerator, ReportBuilder, integration |
-| Artifact verification script | IMPLEMENTED & VERIFIED | verify_artifacts.py validates all outputs |
-| FastAPI endpoints | NOT VERIFIED | Deferred to M2 |
+| M1: Local video pipeline | VERIFIED | VideoReader, MotionAnalyzer, HeatmapGenerator, ReportBuilder classes; 13 tests passing |
+| M2: Minimal API Integration | IMPLEMENTED & VERIFIED | FastAPI app with /health and /analyze endpoints; 15 API tests passing |
+| GET /health endpoint | VERIFIED | Returns service status and OpenCV version; tested with 200 response |
+| POST /analyze endpoint | VERIFIED | Accepts video upload, validates, processes, returns JSON with metrics |
+| File upload validation | VERIFIED | Type checking, size limits (100 MB), content validation, empty file rejection |
+| Temp file handling | VERIFIED | Safe file storage with automatic cleanup on success and failure |
+| Error handling | VERIFIED | Invalid files (400), unsupported types (400), processing errors (500) |
+| API response format | VERIFIED | Includes run_id, processing metrics, analysis results, artifact paths |
+| FastAPI tests | 15/15 PASSING | Health, valid upload, metrics included, invalid type rejection, invalid video rejection, empty file rejection, file cleanup |
+| M1 tests | 13/13 PASSING | All continue to pass; API does not break core pipeline |
+| Manual API verification | PASSED | Health endpoint, video upload processing, error handling tested |
+| FastAPI endpoints | NOT VERIFIED | Live server deployment (local only verified via TestClient) |
 | Adaptive analysis / decision trace | NOT VERIFIED | Deferred to M3 |
 | AWS component | NOT VERIFIED | Deferred to M4 |
-| Evaluation results | VERIFIED | Test with synthetic video: 2.06s processing, 3.72% avg motion |
+| Evaluation results | VERIFIED | API processed 30-frame synthetic video in 0.14s (209 FPS throughput) |
 | README / clean setup | VERIFIED | README.md present with quick start |
 | Competition submission | NOT STARTED | Deferred to M6 |
 
 ## Verified facts
 
 - The project is **Nexus Spatial Intelligence** for the OpenCV AI Competition 2026, powered by AWS.
-- **Milestone 1 is COMPLETE and VERIFIED:**
-  - Local video-processing pipeline implemented using OpenCV 5.0.0
-  - VideoReader class: extracts metadata and reads frames
-  - MotionAnalyzer class: applies MOG2 background subtraction, computes foreground percentages
-  - HeatmapGenerator class: creates spatial activity heatmap with 8x8 grid
-  - ReportBuilder class: generates comprehensive JSON reports
-  - main.py CLI entry point: processes video end-to-end
-- **Test suite: 13 automated tests, all passing**
-  - Tests cover all four main classes
-  - Integration test validates complete pipeline
-  - All tests use synthetic data to avoid external dependencies
-- **Real video processing verified:**
-  - Tested with 300-frame synthetic video (640x480, 30 FPS)
-  - Processing duration: 2.06 seconds (158 FPS processing rate)
-  - Generated artifacts: annotated video, heatmap, JSON report, run metadata
-  - All artifacts verified as readable and valid
-  - Motion metrics: avg 3.72%, min 0%, max 8.61%, std 1.90%
-- **Code quality:**
-  - Modular, well-documented classes with docstrings
-  - Type hints throughout
-  - Error handling for invalid files and read failures
-  - Clear logging with progress indicators
+- **Milestone 1 (Local Pipeline):** COMPLETE - VideoReader, MotionAnalyzer, HeatmapGenerator, ReportBuilder classes working end-to-end.
+- **Milestone 2 (API Integration):** COMPLETE - FastAPI service with /health and /analyze endpoints.
 - **Environment:**
   - Python 3.12.10
   - OpenCV 5.0.0
   - NumPy 2.5.4
+  - FastAPI 0.161.1
+  - Uvicorn 0.54.0
   - Windows 10 Build 26200
+- **Test Suite Status:**
+  - M1 tests: 13/13 passing
+  - M2 tests: 15/15 passing
+  - Total: 28 automated tests passing
+- **API Verification:**
+  - Health endpoint: Returns 200 with service metadata
+  - Analyze endpoint: Accepts video uploads, validates, processes, returns JSON
+  - File validation: Type checking, size limits, content validation
+  - Temp file cleanup: Verified on both success and failure
+  - Error handling: Invalid files, unsupported types, corrupted videos properly rejected
+  - Processing throughput: 209 FPS (30-frame synthetic video in 0.14 seconds)
+- **Processing Metrics (30-frame test):**
+  - Avg foreground: 67.59% (high activity due to animated moving objects)
+  - Min foreground: 0%
+  - Max foreground: 100%
+  - Std deviation: 44.25%
 
 ## Open blockers / unknowns
 

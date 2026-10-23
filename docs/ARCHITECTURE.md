@@ -1,6 +1,6 @@
 # Architecture — Nexus Spatial Intelligence
 
-**Document status:** M1 local video-analysis pipeline is IMPLEMENTED and VERIFIED. M2-M6 remain proposed.
+**Document status:** M1 and M2 are IMPLEMENTED and VERIFIED. M3-M6 remain proposed.
 
 ## 1. Product goal
 
@@ -9,19 +9,20 @@ Nexus Spatial Intelligence analyzes short video clips to produce spatially organ
 ## 2. Current implementation status
 
 **MILESTONE 1 — VERIFIED COMPLETE**
-
 - ✓ Local video-analysis pipeline using OpenCV 5.0.0
-- ✓ VideoReader class for metadata extraction and frame reading
-- ✓ MotionAnalyzer class with MOG2 background subtraction
-- ✓ HeatmapGenerator class for spatial activity visualization  
-- ✓ ReportBuilder class for JSON report generation
+- ✓ VideoReader, MotionAnalyzer, HeatmapGenerator, ReportBuilder classes
 - ✓ CLI entry point (main.py) for end-to-end processing
-- ✓ Comprehensive automated test suite (13 tests)
-- ✓ Artifact verification and validation
+- ✓ 13 automated tests
+
+**MILESTONE 2 — VERIFIED COMPLETE**
+- ✓ FastAPI service (api.py) with GET /health and POST /analyze
+- ✓ File upload validation (type, size, content)
+- ✓ Safe temporary file handling with cleanup
+- ✓ JSON response with run ID, metrics, artifact references
+- ✓ Server entry point (server.py) for development
+- ✓ 15 automated API tests
 
 **Remaining components are PROPOSED, not yet implemented:**
-
-- A small HTTP API (FastAPI) for submitting videos and obtaining results (M2).
 - Optional AWS-backed execution and object storage (M4).
 - Optional adaptive analysis loop whose next action depends on the first visual result (M3).
 - Evaluation harness and performance benchmarking (M5).
