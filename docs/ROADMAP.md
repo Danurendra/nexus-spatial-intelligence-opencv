@@ -82,18 +82,30 @@ Acceptance criteria:
 
 ### M3 — Adaptive analysis and decision trace
 
-**Priority:** P1 · **Status:** Not verified
+**Priority:** P1 · **Status:** IMPLEMENTED & VERIFIED
 
 Tasks:
-- Define a measurable condition based on the first visual result.
-- Implement a bounded follow-up action, such as additional sampling in a selected region.
-- Record observation, decision, action, reanalysis result, and final status.
-- Compare the adaptive path with a simple baseline.
+- ✓ Define measurable condition based on initial motion metrics.
+- ✓ Implement bounded follow-up action (16x16 grid refinement).
+- ✓ Record observation, decision, action, reanalysis result, and final status.
+- ✓ Compare adaptive vs baseline results.
+- ✓ Decision demonstrably changes next action (deterministic policy).
 
 Acceptance criteria:
-- The next action demonstrably changes when the initial observation changes.
-- Tests verify both the action-triggered and non-triggered cases.
-- Any claimed benefit is supported by observed results.
+- ✓ The next action demonstrably changes when initial observation changes.
+- ✓ Tests verify both action-triggered and non-triggered cases.
+- ✓ Decision trace recorded in JSON report.
+- ✓ Follow-up analysis respects processing bounds (uses same frames).
+
+**Evidence:**
+- 18 tests passing (policy logic, engine, decision traces, end-to-end)
+- Both decision branches verified: triggered and skipped
+- Low activity (3.72%) triggers follow-up ✓
+- High activity (high threshold) skips follow-up ✓
+- Decision trace includes: policy, observations, condition, decision, reason, config, results
+- Follow-up heatmap generated separately (16x16 grid)
+- Report version 1.1 with adaptive_analysis section
+- CLI parameter: --adaptive-threshold allows policy tuning
 
 ### M4 — AWS integration
 

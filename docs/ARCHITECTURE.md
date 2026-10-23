@@ -1,6 +1,6 @@
 # Architecture — Nexus Spatial Intelligence
 
-**Document status:** M1 and M2 are IMPLEMENTED and VERIFIED. M3-M6 remain proposed.
+**Document status:** M1, M2, and M3 are IMPLEMENTED and VERIFIED. M4-M6 remain proposed.
 
 ## 1. Product goal
 
@@ -23,8 +23,7 @@ Nexus Spatial Intelligence analyzes short video clips to produce spatially organ
 - ✓ 15 automated API tests
 
 **Remaining components are PROPOSED, not yet implemented:**
-- Optional AWS-backed execution and object storage (M4).
-- Optional adaptive analysis loop whose next action depends on the first visual result (M3).
+- AWS-backed execution and object storage (M4).
 - Evaluation harness and performance benchmarking (M5).
 - Competition submission package (M6).
 
@@ -74,14 +73,14 @@ Report builder
 API response / local UI
 ```
 
-A later adaptive-analysis path may extend the flow:
+A later adaptive-analysis path is now IMPLEMENTED and VERIFIED:
 
 ```text
 Initial visual result -> evaluate explicit condition -> select a bounded follow-up
              -> analyze selected frames/regions -> compare results -> record decision trace
 ```
 
-This path counts as adaptive/agentic behavior only when the first result demonstrably affects the next action. A static sequence with a fixed second pass is not sufficient evidence of such behavior.
+This is VERIFIED as adaptive/agentic behavior: the first result demonstrably affects the next action through a deterministic policy ("low_activity_refinement" triggers 16x16 grid if motion < threshold). Both decision branches are tested.
 
 ## 5. Proposed interfaces
 

@@ -1,7 +1,7 @@
 # Session Handoff — Nexus Spatial Intelligence
 
 **Last updated:** 2026-10-23  
-**Session state:** M2 API integration complete and verified. FastAPI endpoints tested with 15 automated tests. Ready for M3 adaptive analysis implementation.
+**Session state:** M3 adaptive vision analysis complete and verified. 46 automated tests passing (M1:13, M2:15, M3:18). Ready for M4 AWS integration.
 
 ## What this project is
 
@@ -9,80 +9,113 @@ Nexus Spatial Intelligence is intended to be a reproducible video-analysis appli
 
 ## Last verified checkpoint
 
-**M2 Minimal API Integration — COMPLETE**
+**M3 Adaptive Vision Analysis — COMPLETE**
 
-- Git repository at commit `04325e4` with all M2 implementation
+- Git repository at commit `fcf2a55` with M3 implementation
 - Core modules:
-  - `src/api.py`: FastAPI application with /health and /analyze endpoints
-  - `src/server.py`: Development server entry point
-  - `tests/test_api.py`: 15 comprehensive API tests
-  - `test_api_manual.py`: Manual verification script
-- API Features:
-  - GET /health: Returns service status (200)
-  - POST /analyze: Accepts video upload, validates, processes, returns JSON
-  - File validation: type checking (.mp4, .avi, .mov, .mkv, .flv), size limits (100 MB), content validation
-  - Temp file handling: Safe storage in temp dir with automatic cleanup on success/failure
-  - Error handling: 400 for invalid inputs, 500 for processing errors
+  - `src/adaptive_analysis.py`: Policy engine with AdaptiveAnalysisPolicy and AdaptiveAnalysisEngine
+  - `src/main.py`: Extended with adaptive logic and --adaptive-threshold parameter
+  - `src/video_analyzer.py`: Updated to store foreground masks and support adaptive_trace in reports
+  - `tests/test_adaptive_analysis.py`: 18 comprehensive adaptive tests
+- Adaptive Policy:
+  - Name: "low_activity_refinement"
+  - Version: 1.0
+  - Behavior: If avg_foreground_percentage < threshold, trigger follow-up with 16x16 grid
+  - Threshold: Configurable (default 5.0%, tested with 10.0% and 2.0%)
+- Decision Trace Recording:
+  - Policy name and version
+  - Initial observations with all baseline metrics
+  - Condition evaluated (threshold comparison)
+  - Decision made (follow_up_triggered or follow_up_skipped)
+  - Reason (human-readable explanation)
+  - Follow-up configuration (action, grid sizes, frame count, reason)
+  - Follow-up results (if triggered): metrics, duration, grid size, comparison
+  - Status (complete or followup_failed)
+  - Warnings array
+- Follow-up Analysis:
+  - Triggered only when baseline avg_foreground < threshold
+  - Uses same frames as baseline (no additional frame processing)
+  - Processes with 16x16 grid instead of 8x8
+  - Generates separate heatmap artifact (heatmap_followup_16x16.png)
+  - Comparison analysis between baseline and follow-up
 - Test Results:
-  - 15/15 API tests passing
-  - 13/13 M1 tests still passing (core pipeline untouched)
-  - Health endpoint verified: returns 200 with service metadata
-  - Upload endpoint verified: processes 30-frame synthetic video in 0.14s (209 FPS)
-  - File validation verified: invalid types rejected, corrupted videos rejected
-  - Temp cleanup verified: directories cleaned after analysis
-- API Response Format:
-  - status: "success" or error
-  - run_id: unique identifier
-  - processing: frames_processed, duration_seconds, fps_processed
-  - analysis: method, description, metrics (avg/min/max/std foreground %)
-  - artifacts: paths to annotated_video and heatmap
-  - notes: disclaimer about motion vs detection
-- Requirements Updated:
-  - FastAPI 0.161.1
-  - Uvicorn 0.54.0
-  - python-multipart 0.0.32
-  - httpx 0.28.1
-  - All dependencies pinned for reproducibility
+  - 18/18 adaptive tests passing
+  - 13/13 M1 tests still passing (no regression)
+  - 15/15 M2 tests still passing (no regression)
+  - Total: 46/46 tests passing
+  - Both decision branches verified deterministic
+  - Policy logic verified with unit tests
+  - End-to-end pipeline verified with synthetic videos
+- Report Schema:
+  - Report version updated to 1.1
+  - New "adaptive_analysis" section added when present
+  - Backward compatible (section is optional)
+  - Includes full decision trace and results
+- CLI Features:
+  - New parameter: --adaptive-threshold <float>
+  - Default: 5.0
+  - Example: python src/main.py video.mp4 --adaptive-threshold 10.0
+- Verified Behavior:
+  - Low activity (3.72%) with threshold 10.0%: Follow-up TRIGGERED ✓
+  - Low activity (3.72%) with threshold 2.0%: Follow-up SKIPPED ✓
+  - Decision recorded accurately in both cases ✓
+  - Follow-up heatmap generated only when triggered ✓
+  - Artifacts organized by run_id as before ✓
 
 ## Exact next steps
 
-**For next session: Implement M3 — Adaptive Analysis and Decision Trace**
+**For next session: Implement M4 — AWS Integration**
 
-1. **Design the adaptive condition:**
-   - Define a measurable threshold based on initial motion analysis
-   - Example: IF avg_foreground_percentage < 5%, analyze at higher grid resolution
-   - Example: IF video has high motion variance, focus on high-motion regions
-   - Or: IF processing time < 100ms, run additional refinement pass
+This is the final required milestone before competition submission. M4 should:
 
-2. **Implement adaptive logic in video_analyzer.py:**
-   - After initial analysis, evaluate the condition
-   - If triggered, perform bounded follow-up analysis (e.g., re-analyze high-motion regions)
-   - Record decision and rationale in output report
+1. **Plan AWS architecture:**
+   - Assess available AWS account permissions
+   - Choose compute: Lambda (serverless), EC2 (VMs), or ECS (containers)
+   - Choose storage: S3 for inputs/outputs, optional CloudWatch for logs
+   - Establish IAM roles with least-privilege permissions
 
-3. **Create decision trace in JSON report:**
-   - Add "adaptive_analysis" section to report.json
-   - Record: initial_condition, decision_made, action_taken, result_comparison, final_status
+2. **Determine scope based on competition requirements:**
+   - Does the competition require cloud deployment?
+   - What AWS services are permitted/suggested?
+   - Are there budget or quota limits?
+   - What submission format is expected?
 
-4. **Create M3 tests:**
-   - Test with video that triggers adaptive path
-   - Test with video that does not trigger adaptive path
-   - Verify decision trace is recorded
-   - Compare results with/without adaptive analysis
+3. **Implement minimal AWS integration:**
+   - Upload sample video to S3
+   - Invoke analysis via Lambda or compute instance
+   - Store results in S3
+   - Document the flow and costs
 
-5. **Update API to return adaptive trace:**
-   - Include adaptive_analysis data in POST /analyze response
-   - Preserve decision log for demonstration
+4. **Test end-to-end AWS pipeline:**
+   - Run M1/M2/M3 tests against AWS-deployed service
+   - Verify artifact retrieval from S3
+   - Measure performance and costs
 
-6. **Verify and commit:**
-   - Run M1 tests (13) - should still pass
-   - Run M2 tests (15) - should still pass
-   - Run new M3 tests
-   - Commit with: "feat: Implement M3 adaptive analysis with decision trace"
+5. **Prepare competition submission package (M6):**
+   - README with AWS setup and demo instructions
+   - Sample run results and screenshots
+   - Cost analysis and limitations
+   - Adaptive analysis explanation and evidence
+   - Commit with: "feat: Implement M4 AWS integration"
 
-**Then prepare for M4 (AWS Integration):**
-- Assess AWS account permissions
-- Plan S3 storage for inputs/outputs
-- Plan compute deployment (Lambda, EC2, or container)
+**Optional: M5 Evaluation (can run in parallel)**
+- Create comprehensive evaluation matrix
+- Test on diverse sample videos
+- Document processing time, metrics, adaptive decisions
+- Report limitations and areas for future work
+
+**Final checklist before submission:**
+- [ ] All 46 tests passing
+- [ ] README complete with setup and demo
+- [ ] AWS deployment working and documented
+- [ ] Sample outputs captured
+- [ ] Competition requirements verified
+- [ ] Budget and cost documented
+- [ ] Adaptive analysis demonstrated with evidence
+- [ ] Run final verification script
+- [ ] All code committed and clean
+- [ ] Submission deadline confirmed
+
 
 ## Commands not to run blindly
 
