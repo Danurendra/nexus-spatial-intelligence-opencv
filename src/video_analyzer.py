@@ -105,6 +105,7 @@ class MotionAnalyzer:
         )
         self.motion_data = []
         self.frame_count = 0
+        self.foreground_masks = []  # Store foreground masks for follow-up analysis
     
     def process_frame(self, frame: np.ndarray) -> Tuple[np.ndarray, Dict[str, float]]:
         """Process single frame for motion.
@@ -123,6 +124,9 @@ class MotionAnalyzer:
         
         # Remove shadows (value 128) - keep only foreground (255) and background (0)
         foreground = cv2.threshold(foreground, 200, 255, cv2.THRESH_BINARY)[1]
+        
+        # Store for follow-up analysis
+        self.foreground_masks.append(foreground.copy())
         
         # Calculate metrics
         total_pixels = frame.shape[0] * frame.shape[1]
@@ -182,6 +186,7 @@ class HeatmapGenerator:
         self.cell_width = video_width // grid_size
         self.cell_height = video_height // grid_size
         self.heatmap_data = np.zeros((grid_size, grid_size), dtype=np.float32)
+        self.foreground_frames = []  # Store foreground masks for follow-up analysis
     
     def accumulate_motion(self, foreground_mask: np.ndarray):
         """Accumulate motion data into spatial bins.
@@ -239,6 +244,7 @@ class ReportBuilder:
         processing_duration: float,
         artifacts: Dict[str, str],
         frames_processed: int,
+        adaptive_trace: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         """Build a comprehensive analysis report.
         
@@ -249,12 +255,13 @@ class ReportBuilder:
             processing_duration: Total processing time in seconds
             artifacts: Dictionary of generated artifact paths
             frames_processed: Number of frames actually processed
+            adaptive_trace: Optional adaptive analysis decision trace
             
         Returns:
             Dictionary representing the analysis report
         """
-        return {
-            "report_version": "1.0",
+        report = {
+            "report_version": "1.1",
             "run_id": run_id,
             "timestamp": datetime.now().isoformat(),
             "video": {
@@ -286,3 +293,9 @@ class ReportBuilder:
             },
             "notes": "Foreground percentage indicates motion/activity level. Not a person detection system.",
         }
+        
+        # Add adaptive analysis section if provided
+        if adaptive_trace:
+            report["adaptive_analysis"] = adaptive_trace
+        
+        return report
