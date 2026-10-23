@@ -1,7 +1,7 @@
 # Session Handoff — Nexus Spatial Intelligence
 
 **Last updated:** 2026-10-23  
-**Session state:** Starter documentation prepared; implementation work has not been verified in the new repository.
+**Session state:** Repository initialized, Git baseline established, OpenCV 5 verified. Ready for M1 local pipeline implementation.
 
 ## What this project is
 
@@ -9,28 +9,66 @@ Nexus Spatial Intelligence is intended to be a reproducible video-analysis appli
 
 ## Last verified checkpoint
 
-- The six starter-document contents have been prepared: `AGENTS.md`, `ARCHITECTURE.md`, `DECISIONS.md`, `ROADMAP.md`, `STATUS.md`, and `SESSION_HANDOFF.md`.
-- The target repository has **not** been identified or inspected in this session, so no claim is made about the application code, installed dependencies, tests, or deployment.
+- Git repository initialized at commit `bbec4e7` with baseline documentation, `.gitignore`, and venv configuration.
+- Python 3.12.10 virtual environment created and activated.
+- OpenCV 5.0.0 installed with verified features:
+  - VideoCapture, VideoWriter
+  - createBackgroundSubtractorMOG2
+  - cvtColor, applyColorMap
+  - All CAP_PROP_* constants for metadata extraction
+- NumPy 2.5.4 installed
+- Directory structure created: `src/`, `tests/`, `artifacts/`, `videos/`
+- Verification script `verify_opencv.py` passes all checks
+- All documentation files are tracked in Git
+- No application code implemented yet; ready to begin M1
 
 ## Exact next steps
 
-1. Create the new repository on GitHub or locally and put these six files at its root.
-2. Open a terminal at the repository root and run the following read-only inspection commands:
+1. **Obtain or create a test video:**
+   - Source a lawfully obtainable video clip (30 seconds to 2 minutes recommended)
+   - Ensure the video contains visible motion or activity changes
+   - Place it in the `videos/` folder
+   - Record the filename, source, and license in the project notes
 
+2. **Implement Milestone 1 (Local Video Pipeline):**
+
+   Create `src/video_analyzer.py` with:
+   - VideoReader class: read video metadata and frames
+   - MotionAnalyzer class: apply BackgroundSubtractorMOG2, compute motion statistics
+   - HeatmapGenerator class: create spatial activity visualization
+   - ReportBuilder class: generate JSON with metrics and metadata
+   
+   Create `src/main.py` as entry point:
+   - Accept video path as command-line argument
+   - Run end-to-end pipeline
+   - Save artifacts to `artifacts/{run_id}/`
+   - Print summary to stdout
+
+3. **Test with sample video:**
    ```powershell
-   git status --short --branch
-   git log -5 --oneline
-   Get-ChildItem -Force
-   python --version
-   python -m pip --version
-   python -c "import cv2; print(cv2.__version__)"
+   cd "E:\01 Project-DN\nexus-spatial-intelligence-opencv"
+   venv\Scripts\Activate
+   python src/main.py videos/test_sample.mp4
    ```
 
-   If Git is not initialized, note that fact instead of initializing over existing files. If `cv2` is missing, record the error; do not silently install or switch versions before inspecting the dependency setup.
+4. **Verify artifacts:**
+   - Check `artifacts/{run_id}/` for:
+     - `annotated_video.mp4`
+     - `heatmap.png`
+     - `report.json`
+     - `run_metadata.json`
+   - Inspect JSON for valid schema and realistic values
 
-3. Inspect the README, dependency files, source entry points, tests, and Docker configuration; update `STATUS.md` with observed facts.
-4. Confirm the OpenCV 5 runtime requirement and video I/O support. Then implement the smallest working single-video pipeline.
-5. After the first successful run, save the exact test command, output artifact names, elapsed time, and any warnings in `STATUS.md`.
+5. **Commit verified work:**
+   ```powershell
+   git add src/
+   git commit -m "feat: Implement M1 local video pipeline with motion analysis"
+   ```
+
+6. **Update documentation:**
+   - Update `STATUS.md` with M1 verification evidence
+   - Update `SESSION_HANDOFF.md` with new checkpoint
+   - Update `DECISIONS.md` if implementation choices differ from proposals
 
 ## Commands not to run blindly
 
