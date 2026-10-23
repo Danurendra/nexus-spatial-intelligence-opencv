@@ -171,15 +171,6 @@ async def analyze_uploaded_video(file: UploadFile = File(...)) -> Dict[str, Any]
         run_id = result["run_id"]
         s3_upload_result = s3_storage.upload_artifacts(run_id, output_dir)
         
-        if not s3_upload_result["success"]:
-            # S3 upload failed - this is a hard error
-            error_detail = "; ".join(s3_upload_result["errors"])
-            logger.error(f"S3 upload failed for run {run_id}: {error_detail}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"S3 artifact upload failed: {error_detail}"
-            )
-        
         # Build response with agent recommendation
         metrics = result["report"]["analysis"]["metrics"]
         decision_trace = result["report"].get("adaptive_analysis", {})
@@ -190,6 +181,14 @@ async def analyze_uploaded_video(file: UploadFile = File(...)) -> Dict[str, Any]
             report=result["report"],
         )
         
+        warnings = []
+        
+        # Check for S3 upload failure and add as warning (non-fatal)
+        if s3_upload_result["s3_enabled"] and not s3_upload_result["success"]:
+            error_detail = "; ".join(s3_upload_result["errors"])
+            logger.warning(f"S3 upload failed for run {run_id}: {error_detail}")
+            warnings.append(f"S3 artifact upload failed: {error_detail}. Local artifacts are available.")
+        
         response = {
             "status": "success",
             "run_id": result["run_id"],
@@ -197,7 +196,7 @@ async def analyze_uploaded_video(file: UploadFile = File(...)) -> Dict[str, Any]
             "analysis": result["report"]["analysis"],
             "video": result["report"]["video"],
             "artifacts": result["report"]["artifacts"],
-            "warnings": [],
+            "warnings": warnings,
             "notes": result["report"]["notes"],
             "adaptive_analysis": decision_trace,
             "agent_recommendation": agent_execution["recommendation"],
@@ -209,6 +208,7 @@ async def analyze_uploaded_video(file: UploadFile = File(...)) -> Dict[str, Any]
                 "enabled": True,
                 "bucket": s3_storage.config.bucket,
                 "uploaded_artifacts": s3_upload_result["uploaded_artifacts"],
+                "upload_errors": s3_upload_result["errors"] if not s3_upload_result["success"] else [],
             }
         else:
             response["s3_storage"] = {

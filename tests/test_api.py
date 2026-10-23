@@ -344,13 +344,14 @@ class TestS3IntegrationAPI(unittest.TestCase):
         self.assertEqual(data["status"], "success")
         self.assertIn("run_id", data)
     
-    def test_analyze_with_s3_upload_failure_returns_500(self):
-        """Analysis should fail (500) if S3 upload fails."""
+    def test_analyze_with_s3_upload_failure_returns_200_with_warning(self):
+        """Analysis should succeed (200) even if S3 upload fails, with warning in response."""
         from unittest.mock import patch, MagicMock
         
         with open(self.test_video_path, "rb") as f:
             # Mock S3 storage to fail on upload
             with patch('src.api.s3_storage') as mock_s3:
+                mock_s3.config = MagicMock(bucket="test-bucket")
                 mock_s3.upload_artifacts.return_value = {
                     "success": False,
                     "s3_enabled": True,
@@ -364,9 +365,19 @@ class TestS3IntegrationAPI(unittest.TestCase):
                     files={"file": ("test.mp4", f, "video/mp4")}
                 )
         
-        self.assertEqual(response.status_code, 500)
+        # Analysis should still succeed (200) with local artifacts
+        self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIn("S3 artifact upload failed", data.get("detail", ""))
+        self.assertEqual(data["status"], "success")
+        
+        # But should include warning about S3 failure
+        self.assertIn("warnings", data)
+        self.assertTrue(any("S3 artifact upload failed" in w for w in data["warnings"]))
+        
+        # S3 storage info should reflect the failure
+        self.assertIn("s3_storage", data)
+        self.assertEqual(data["s3_storage"]["enabled"], True)
+        self.assertIn("upload_errors", data["s3_storage"])
 
 
 def run_tests(verbosity=2):

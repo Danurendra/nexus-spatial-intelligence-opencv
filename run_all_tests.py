@@ -1,19 +1,23 @@
 #!/usr/bin/env python
-"""Comprehensive test summary for Nexus Spatial Intelligence M1, M2, M3, and M4."""
+"""Comprehensive test summary for Nexus Spatial Intelligence M1, M2, M3, M4, and M5."""
 
 import subprocess
 import sys
 from pathlib import Path
+import os
+
+# Use current directory as base path
+repo_root = Path.cwd()
 
 print("\n" + "="*70)
-print("NEXUS SPATIAL INTELLIGENCE - COMPREHENSIVE TEST SUMMARY (M1/M2/M3/M4)")
+print("NEXUS SPATIAL INTELLIGENCE - COMPREHENSIVE TEST SUMMARY (M1-M5)")
 print("="*70)
 
-print("\n[1/4] Running M1 Video Analysis Tests (13 tests)...")
+print("\n[1/5] Running M1 Video Analysis Tests (13 tests)...")
 print("-" * 70)
 result_m1 = subprocess.run(
     [sys.executable, "tests/test_video_analyzer.py"],
-    cwd="E:\\01 Project-DN\\nexus-spatial-intelligence-opencv",
+    cwd=str(repo_root),
     capture_output=True,
     text=True
 )
@@ -23,11 +27,11 @@ m1_lines = [line for line in m1_output.split('\n') if 'Ran' in line or 'OK' in l
 if m1_lines:
     print(m1_lines[-1])
 
-print("\n[2/4] Running M2 API Integration Tests (15 tests)...")
+print("\n[2/5] Running M2 API Integration Tests (19 tests)...")
 print("-" * 70)
 result_m2 = subprocess.run(
     [sys.executable, "tests/test_api.py"],
-    cwd="E:\\01 Project-DN\\nexus-spatial-intelligence-opencv",
+    cwd=str(repo_root),
     capture_output=True,
     text=True
 )
@@ -37,11 +41,11 @@ m2_lines = [line for line in m2_output.split('\n') if 'Ran' in line or 'OK' in l
 if m2_lines:
     print(m2_lines[-1])
 
-print("\n[3/4] Running M3 Adaptive Analysis Tests (18 tests)...")
+print("\n[3/5] Running M3 Adaptive Analysis Tests (18 tests)...")
 print("-" * 70)
 result_m3 = subprocess.run(
     [sys.executable, "tests/test_adaptive_analysis.py"],
-    cwd="E:\\01 Project-DN\\nexus-spatial-intelligence-opencv",
+    cwd=str(repo_root),
     capture_output=True,
     text=True
 )
@@ -51,11 +55,11 @@ m3_lines = [line for line in m3_output.split('\n') if 'Ran' in line or 'OK' in l
 if m3_lines:
     print(m3_lines[-1])
 
-print("\n[4/4] Running M4 S3 Storage Tests (18 tests)...")
+print("\n[4/5] Running M4 S3 Storage Tests (18 tests)...")
 print("-" * 70)
 result_m4 = subprocess.run(
     [sys.executable, "tests/test_s3_storage.py"],
-    cwd="E:\\01 Project-DN\\nexus-spatial-intelligence-opencv",
+    cwd=str(repo_root),
     capture_output=True,
     text=True
 )
@@ -69,7 +73,7 @@ print("\n[5/5] Running M5 Agent & GUI Tests (13 tests)...")
 print("-" * 70)
 result_m5 = subprocess.run(
     [sys.executable, "tests/test_vision_agent.py"],
-    cwd="E:\\01 Project-DN\\nexus-spatial-intelligence-opencv",
+    cwd=str(repo_root),
     capture_output=True,
     text=True
 )

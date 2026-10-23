@@ -8,8 +8,15 @@ Usage:
 
 import argparse
 import logging
+import sys
+from pathlib import Path
 
 import uvicorn
+
+# Ensure the repo root is in sys.path for imports
+repo_root = Path(__file__).parent.parent
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
 
 from src.api import create_app
 
