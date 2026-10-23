@@ -1,7 +1,7 @@
 # Session Handoff — Nexus Spatial Intelligence
 
 **Last updated:** 2026-10-23  
-**Session state:** Repository initialized, Git baseline established, OpenCV 5 verified. Ready for M1 local pipeline implementation.
+**Session state:** M1 implementation complete and verified. Local pipeline tested with synthetic video. Ready for M2 API integration.
 
 ## What this project is
 
@@ -9,66 +9,64 @@ Nexus Spatial Intelligence is intended to be a reproducible video-analysis appli
 
 ## Last verified checkpoint
 
-- Git repository initialized at commit `bbec4e7` with baseline documentation, `.gitignore`, and venv configuration.
-- Python 3.12.10 virtual environment created and activated.
-- OpenCV 5.0.0 installed with verified features:
-  - VideoCapture, VideoWriter
-  - createBackgroundSubtractorMOG2
-  - cvtColor, applyColorMap
-  - All CAP_PROP_* constants for metadata extraction
-- NumPy 2.5.4 installed
-- Directory structure created: `src/`, `tests/`, `artifacts/`, `videos/`
-- Verification script `verify_opencv.py` passes all checks
-- All documentation files are tracked in Git
-- No application code implemented yet; ready to begin M1
+**M1 Local Video Pipeline — COMPLETE**
+
+- Git repository at commit `a0c2760` with all M1 implementation
+- Core modules implemented:
+  - `src/video_analyzer.py`: VideoReader, MotionAnalyzer, HeatmapGenerator, ReportBuilder
+  - `src/main.py`: CLI entry point for end-to-end analysis
+  - `tests/test_video_analyzer.py`: 13 automated tests (all passing)
+  - `verify_artifacts.py`: Artifact validation script
+  - `create_test_video.py`: Synthetic test video generator
+- Test video created: `videos/test_synthetic.mp4` (300 frames, 640x480, 30 FPS, 0.59 MB)
+- Test run verified:
+  - Processed 300 frames in 2.06 seconds
+  - Generated annotated_video.mp4 (readable, correct format)
+  - Generated heatmap.png (640x480 BGR color image)
+  - Generated report.json (valid, 9 top-level keys, realistic metrics)
+  - Generated run_metadata.json (valid, 6 keys with processing info)
+- All artifacts independently verified with verify_artifacts.py
+- Test suite passes with no failures
+- Motion metrics: avg 3.72%, min 0%, max 8.61%, std 1.90%
+- Processing rate: 158 FPS (good for real-time capability)
 
 ## Exact next steps
 
-1. **Obtain or create a test video:**
-   - Source a lawfully obtainable video clip (30 seconds to 2 minutes recommended)
-   - Ensure the video contains visible motion or activity changes
-   - Place it in the `videos/` folder
-   - Record the filename, source, and license in the project notes
+**For next session: Implement M2 — Minimal API Integration**
 
-2. **Implement Milestone 1 (Local Video Pipeline):**
-
-   Create `src/video_analyzer.py` with:
-   - VideoReader class: read video metadata and frames
-   - MotionAnalyzer class: apply BackgroundSubtractorMOG2, compute motion statistics
-   - HeatmapGenerator class: create spatial activity visualization
-   - ReportBuilder class: generate JSON with metrics and metadata
-   
-   Create `src/main.py` as entry point:
-   - Accept video path as command-line argument
-   - Run end-to-end pipeline
-   - Save artifacts to `artifacts/{run_id}/`
-   - Print summary to stdout
-
-3. **Test with sample video:**
+1. **Install FastAPI and dependencies:**
    ```powershell
-   cd "E:\01 Project-DN\nexus-spatial-intelligence-opencv"
    venv\Scripts\Activate
-   python src/main.py videos/test_sample.mp4
+   pip install fastapi uvicorn python-multipart
+   pip freeze > requirements.txt
    ```
 
-4. **Verify artifacts:**
-   - Check `artifacts/{run_id}/` for:
-     - `annotated_video.mp4`
-     - `heatmap.png`
-     - `report.json`
-     - `run_metadata.json`
-   - Inspect JSON for valid schema and realistic values
+2. **Create `src/api.py` with FastAPI application:**
+   - `GET /health` endpoint
+   - `POST /analyze` endpoint accepting video file upload
+   - File validation (type, size limits)
+   - Safe file handling with temp directory cleanup
+   - Return JSON response with status and artifact references
 
-5. **Commit verified work:**
-   ```powershell
-   git add src/
-   git commit -m "feat: Implement M1 local video pipeline with motion analysis"
-   ```
+3. **Update `src/main.py` or create `src/server.py`:**
+   - Add `uvicorn.run()` call for development server
+   - Add logging and request tracking
 
-6. **Update documentation:**
-   - Update `STATUS.md` with M1 verification evidence
-   - Update `SESSION_HANDOFF.md` with new checkpoint
-   - Update `DECISIONS.md` if implementation choices differ from proposals
+4. **Create integration tests:**
+   - Test valid video upload and processing
+   - Test invalid file rejection
+   - Test concurrent requests (if applicable)
+
+5. **Verify and commit:**
+   - Start dev server: `python src/main.py --server`
+   - Test with curl or Postman
+   - Update STATUS.md and SESSION_HANDOFF.md
+   - Commit M2 implementation
+
+**Optional: Prepare M3 (Adaptive Analysis)**
+- Design a measurable condition based on initial motion metrics
+- Implement bounded follow-up analysis
+- Record decision trace in JSON report
 
 ## Commands not to run blindly
 

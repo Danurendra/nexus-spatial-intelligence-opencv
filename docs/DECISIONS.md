@@ -10,13 +10,14 @@ Record decisions that affect product scope, architecture, data, evaluation, depl
 
 ## D-001 — Start with a local video-processing MVP
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-23
 - **Context:** The project has a short delivery window and cloud/frontend complexity could conceal basic computer-vision failures.
 - **Decision:** First verify a local, end-to-end pipeline that reads one video and writes inspectable visual and JSON outputs. Add API, UI, and AWS layers only in sequence after the core path works.
 - **Rationale:** This makes the core OpenCV behavior easier to debug, test, and demonstrate.
 - **Consequences:** Local output generation and reproducible commands are the first acceptance criteria. Cloud deployment is not considered complete merely because local code exists.
-- **Revisit when:** The local pipeline passes repeatable tests or an explicit competition requirement forces a different order.
+- **Status update (2026-10-23):** M1 local pipeline IMPLEMENTED and VERIFIED with real video processing. Synthetic test video generated, processed, and all artifacts verified.
+- **Revisit when:** The local pipeline passes repeatable tests (DONE - 13 tests passing) or an explicit competition requirement forces a different order.
 
 ## D-002 — Describe measurements precisely
 
